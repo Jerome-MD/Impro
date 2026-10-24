@@ -1,5 +1,7 @@
 import {draw,view} from './engine.js';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const sigSvg=s=>{const w=Math.max(40,16+14*s.names.length),y=p=>50-p*4,g=s.n>0?'♯':'♭';
+  return`<svg viewBox="0 0 ${w} 64" width="${w*1.3}" height="83" role="img" aria-label="Armure" fill="currentColor">${[0,2,4,6,8].map(p=>`<line x1="0" x2="${w}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".6"/>`).join('')}${s.pos.map((p,i)=>`<text x="${14+i*14}" y="${y(p)}" font-size="22" text-anchor="middle" dominant-baseline="central">${g}</text>`).join('')}</svg>`};
 // --- Stockage
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem('impro.'+k))??d}catch{return d}};
 const sv=(k,v)=>{try{localStorage.setItem('impro.'+k,JSON.stringify(v))}catch{}};
@@ -36,7 +38,7 @@ function render(){
   const cell=(k,lab,val,x='')=>`<section class="c"><div class="lab">${lab}${lk(k)}</div><div class="val">${val}</div>${x}</section>`;
   const rh=d.extra.id==='rhythm'?`<div class="rh">${d.extra.grid.split(' ').map(c=>c==='/'?'<i></i>':`<b class="${c==='x'?'x':''}"></b>`).join('')}</div>`:'';
   $('main').innerHTML=
-    cell('style','Style',esc(v.style))+cell('key','Tonalité',esc(v.key))+
+    cell('style','Style',esc(v.style))+cell('key','Tonalité',esc(v.key),`<div class="sig">${sigSvg(v.sig)}<span class="sm">${esc(v.sig.text)}</span></div>`)+
     `<section class="c"><div class="lab">Tempo${lk('tempo')}</div><div class="tp"><button data-t="-5" aria-label="Moins 5">−</button><span class="val">${v.tempo} BPM</span><button data-t="5" aria-label="Plus 5">+</button></div></section>`+
     cell('meter','Mesure',esc(v.meter))+
     `<section class="c w"><div class="lab">Grille, en boucle${lk('grid')}</div><div class="keys">${v.chords.map(c=>`<span class="k">${esc(c)}</span>`).join('')}</div></section>`+

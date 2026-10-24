@@ -7,6 +7,14 @@ const DEG={I:0,II:2,III:4,IV:5,V:7,VI:9,VII:11};
 const KEYS={major:[0,7,5,2,10],minor:[9,4,2,7]};
 const useFlat=(t,m)=>(m==='major'?[5,10,3,8]:[2,7,0,5,10]).includes(t);
 const nm=(pc,flat,fr)=>{const s=(flat?FLAT:SHARP)[((pc%12)+12)%12];return fr?FR[s[0]]+s.slice(1):s};
+// Armure : tonalité relative majeure -> nombre d'altérations (négatif = bémols)
+const SIGMAJ={0:0,7:1,2:2,9:3,4:4,11:5,6:6,5:-1,10:-2,3:-3,8:-4};
+const SORD=[5,0,7,2,9,4,11],FORD=[11,4,9,2,7,0,5],SPOS=[8,5,9,6,3,7,4],FPOS=[4,7,3,6,2,5,1];
+function sigOf(key,fr){
+  const n=SIGMAJ[key.mode==='major'?key.t:(key.t+3)%12],a=Math.abs(n),ord=n>0?SORD:FORD;
+  const names=ord.slice(0,a).map(p=>(fr?FR[SHARP[p]]:SHARP[p])+(n>0?'♯':'♭'));
+  return{n,names,pos:(n>0?SPOS:FPOS).slice(0,a),text:n?`${a} ${n>0?'dièse':'bémol'}${a>1?'s':''} : ${names.join(' ')}`:'Aucune altération'};
+}
 const P=(d,q,b)=>({d,q,b});
 export const LH={'held-root':'Fondamentale tenue','block-13':'Accord plaqué sur les temps 1 et 3','root-then-3rd-5th':'Fondamentale, puis tierce + quinte (cellule de 2 temps)','arp-up':'Arpège montant en croches : fondamentale, tierce, quinte, octave','oom-pah-pah':'Basse sur le temps 1, accord sur les temps 2 et 3','root-fifth':'Fondamentale et quinte en alternance','octaves':'Octaves sur la fondamentale'};
 export const CONSTRAINTS=[['three-notes','Utilise seulement 3 notes de la gamme.'],['repeat-note','Répète une même note, puis change de rythme.'],['long-notes','Joue uniquement des notes longues (blanches et rondes).'],['silence','Après chaque phrase, laisse 2 temps de silence.'],['question-answer','Phrase « question » (montante), puis « réponse » (descendante).'],['motif-3','Invente un motif de 3 notes et répète-le en le décalant.'],['step-only','Mouvement conjoint uniquement (pas de sauts).'],['ending-note','Termine chaque phrase sur la fondamentale ou la quinte.'],['offbeat-start','Commence chaque phrase sur un contretemps.'],['range-octave','Reste dans une seule octave.'],['dynamics','Commence piano, finis forte.']];
@@ -58,5 +66,5 @@ export function view(d,fr=false){
   const st=STYLES.find(s=>s.id===d.style),fl=useFlat(d.key.t,d.key.mode),N=p=>nm(p,fl,fr),m=st.meters[d.meter],sc=SCALES[d.scale];
   const chords=[];
   for(const c of st.prog[d.grid])for(let i=0;i<c.b;i++)chords.push(N(d.key.t+DEG[c.d.replace('♭','')]-(c.d[0]==='♭'?1:0))+c.q);
-  return{style:st.label,key:`${N(d.key.t)} ${d.key.mode==='major'?'majeur':'mineur'}`,meter:m.l,clicks:m.c,chords,scale:sc.n,notes:sc.s.map(x=>N(d.key.t+x)).join(' '),start:`${N(d.key.t+d.start.semis)}, ${d.start.reg}`,lh:LH[d.lh],tempo:d.tempo,extra:d.extra};
+  return{sig:sigOf(d.key,fr),style:st.label,key:`${N(d.key.t)} ${d.key.mode==='major'?'majeur':'mineur'}`,meter:m.l,clicks:m.c,chords,scale:sc.n,notes:sc.s.map(x=>N(d.key.t+x)).join(' '),start:`${N(d.key.t+d.start.semis)}, ${d.start.reg}`,lh:LH[d.lh],tempo:d.tempo,extra:d.extra};
 }
