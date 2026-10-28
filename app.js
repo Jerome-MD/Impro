@@ -1,8 +1,9 @@
 import {draw,view} from './engine.js';
 import {rhythmSvg} from './rhythm.js';
+const VERSION='v5';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const sigSvg=s=>{const w=Math.max(40,16+14*s.names.length),y=p=>50-p*4,g=s.n>0?'♯':'♭';
-  return`<svg viewBox="0 0 ${w} 64" width="${w}" height="64" role="img" aria-label="Armure" fill="currentColor">${[0,2,4,6,8].map(p=>`<line x1="0" x2="${w}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".6"/>`).join('')}${s.pos.map((p,i)=>`<text x="${14+i*14}" y="${y(p)}" font-size="22" text-anchor="middle" dominant-baseline="central">${g}</text>`).join('')}</svg>`};
+  return`<svg viewBox="0 0 ${w} 64" width="${w}" height="64" role="img" aria-label="${esc(s.text)}" fill="currentColor">${[0,2,4,6,8].map(p=>`<line x1="0" x2="${w}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".6"/>`).join('')}${s.pos.map((p,i)=>`<text x="${14+i*14}" y="${y(p)}" font-size="22" text-anchor="middle" dominant-baseline="central">${g}</text>`).join('')}</svg>`};
 // --- Stockage
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem('impro.'+k))??d}catch{return d}};
 const sv=(k,v)=>{try{localStorage.setItem('impro.'+k,JSON.stringify(v))}catch{}};
@@ -41,11 +42,11 @@ function render(){
   const rh=d.extra.id==='rhythm'?rhythmSvg(d.extra.grid,v.meter):'';
   $('main').innerHTML=
     cell('style','Style',V(esc(v.style)),2)+
-    cell('key','Tonalité',`<div class="val ln">${esc(v.key)}${sigSvg(v.sig)}<span class="sm">${esc(v.sig.text)}</span></div>`,4)+
+    cell('key','Tonalité',`<div class="val ln">${esc(v.key)}${sigSvg(v.sig)}</div>`,4)+
     cell('tempo','Tempo',`<div class="tp"><button data-t="-5" aria-label="Moins 5">−</button><span class="val">${v.tempo} BPM</span><button data-t="5" aria-label="Plus 5">+</button></div>`,2)+
     cell('meter','Mesure',V(esc(v.meter)),2)+cell('start','Note de départ',V(esc(v.start)),2)+
     `<section class="c w"><div class="lab">Grille, en boucle</div>${lk('grid')}<div class="keys" style="--n:${v.chords.length>8?6:4}">${v.chords.map(c=>`<span class="k">${esc(c)}</span>`).join('')}</div></section>`+
-    cell('scale','Gamme',V(esc(v.scale))+`<div class="lab">${esc(v.notes)}</div>`+(v.hint?`<div class="lab">${esc(v.hint)}</div>`:''),3)+
+    cell('scale','Gamme',V(esc(v.scale)+` <span class="sm">: ${esc(v.notes)}</span>`)+(v.hint?`<div class="lab">${esc(v.hint)}</div>`:''),3)+
     cell('lh','Main gauche',V(`<span class="sm">${esc(v.lh)}</span>`),3)+
     cell('extra','Consigne',`<div class="val ln"><span class="sm">${esc(v.extra.text)}</span>${rh}</div>`,6);
   $('#date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
@@ -63,7 +64,7 @@ document.addEventListener('click',e=>{
   else if(b.id==='bTim')timer();
   else if(b.id==='bDone'){H[T.date].done=!H[T.date].done;sv('history',H);render()}
   else if(b.id==='bHist')dlg('<h2>Historique</h2>'+(Object.keys(H).sort().reverse().slice(0,30).map(d=>{const v=view(H[d].draw,S.fr);return`<div>${d} : ${esc(v.style)}, ${esc(v.key)} ${H[d].done?'✓':''}</div>`}).join('')||'<p>Aucune séance pour le moment.</p>'));
-  else if(b.id==='bSet'){dlg(`<h2>Réglages</h2><p><label>Notation <select id="sFr"><option value="0">C, D, E</option><option value="1" ${S.fr?'selected':''}>Do, Ré, Mi</option></select></label></p><p><label>Minuteur <select id="sTm">${[0,2,5,10].map(m=>`<option value="${m}" ${S.timer===m?'selected':''}>${m?m+' min':'Aucun'}</option>`).join('')}</select></label></p><p><button id="exp">Exporter la sauvegarde</button> <label class="fl">Importer<input id="imp" type="file" accept="application/json" hidden></label></p>`);
+  else if(b.id==='bSet'){dlg(`<h2>Réglages</h2><p><label>Notation <select id="sFr"><option value="0">C, D, E</option><option value="1" ${S.fr?'selected':''}>Do, Ré, Mi</option></select></label></p><p><label>Minuteur <select id="sTm">${[0,2,5,10].map(m=>`<option value="${m}" ${S.timer===m?'selected':''}>${m?m+' min':'Aucun'}</option>`).join('')}</select></label></p><p><button id="exp">Exporter la sauvegarde</button> <label class="fl">Importer<input id="imp" type="file" accept="application/json" hidden></label></p><p class="lab">Version ${VERSION}</p>`);
     $('#sFr').onchange=e=>{S.fr=e.target.value==='1';sv('settings',S);render()};
     $('#sTm').onchange=e=>{S.timer=+e.target.value;sv('settings',S);render()};
     $('#exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({settings:S,history:H})],{type:'application/json'}));a.download='impro-sauvegarde.json';a.click()};
