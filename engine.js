@@ -22,7 +22,7 @@ export const CONSTRAINTS=[['three-notes','Utilise seulement 3 notes de la gamme.
 export const CELLS={8:['x . x x / . x . x','x . . x / x . x .','x x . x / . x . .'],16:['x . . x . . x . / . x . . . x . .','x . . . x . . x / . . x . . x . .','x . . x . . . . / x . . x . . x .'],6:['x . x x . x','x . . x x .','x . x . x .'],12:['x . . x . x x . . x . .','x . x x . . x . x . . .','x . . . . x x . . x . .']};
 const M44={t:4,c:4,l:'4/4',steps:8,w:1};
 export const STYLES=[
-{id:'blues',label:'Blues',modes:['major'],meters:[{t:4,c:4,l:'4/4 shuffle',steps:12,w:1}],tempo:[70,100],prog:[[P('I','7',4),P('IV','7',2),P('I','7',2),P('V','7',1),P('IV','7',1),P('I','7',2)]],scales:['blues','pent-minor'],lh:['root-fifth','held-root'],w:1},
+{id:'blues',label:'Blues',modes:['major'],meters:[{t:4,c:4,l:'4/4 shuffle',steps:12,w:1}],tempo:[70,100],prog:[[P('I','7',4),P('IV','7',2),P('I','7',2),P('V','7',1),P('IV','7',1),P('I','7',2)]],scales:['blues','pent-minor','pent-major'],lh:['root-fifth','held-root'],w:1},
 {id:'funk',label:'Funk',modes:['minor'],meters:[{t:4,c:4,l:'4/4, doubles croches',steps:16,w:1}],tempo:[95,110],prog:[[P('I','m7',2),P('IV','7',2)]],scales:['pent-minor','blues'],lh:['root-then-3rd-5th','root-fifth','held-root'],w:1},
 {id:'soul',label:'Soul / pop',modes:['major'],meters:[M44],tempo:[70,100],prog:[[P('I','',1),P('VI','m',1),P('IV','',1),P('V','',1)]],scales:['pent-major'],lh:['root-then-3rd-5th','block-13','arp-up','root-fifth','held-root'],w:1},
 {id:'romantic',label:'Romantique',modes:['major'],meters:[{t:3,c:3,l:'3/4',steps:6,w:1}],tempo:[60,85],prog:[[P('I','',2),P('III','m',2),P('IV','',2),P('V','',2)],[P('VI','m',2),P('IV','',2),P('I','',2),P('V','',2)]],scales:['pent-major'],lh:['oom-pah-pah','arp-up','root-then-3rd-5th','held-root'],w:1},
@@ -66,5 +66,5 @@ export function view(d,fr=false){
   const st=STYLES.find(s=>s.id===d.style),fl=useFlat(d.key.t,d.key.mode),N=p=>nm(p,fl,fr),m=st.meters[d.meter],sc=SCALES[d.scale];
   const chords=[];
   for(const c of st.prog[d.grid])for(let i=0;i<c.b;i++)chords.push(N(d.key.t+DEG[c.d.replace('♭','')]-(c.d[0]==='♭'?1:0))+c.q);
-  return{sig:sigOf(d.key,fr),style:st.label,key:`${N(d.key.t)} ${d.key.mode==='major'?'majeur':'mineur'}`,meter:m.l,clicks:m.c,chords,scale:sc.n,notes:sc.s.map(x=>N(d.key.t+x)).join(' '),start:`${N(d.key.t+d.start.semis)}, ${d.start.reg}`,lh:LH[d.lh],tempo:d.tempo,extra:d.extra};
+  return{hint:st.id==='blues'&&sc.s.includes(3)?'Sur accords majeurs, c\'est le son blues : une seule gamme pour toute la grille.':'',sig:sigOf(d.key,fr),style:st.label,key:`${N(d.key.t)} ${d.key.mode==='major'?'majeur':'mineur'}`,meter:m.l,clicks:m.c,chords,scale:sc.n,notes:sc.s.map(x=>N(d.key.t+x)).join(' '),start:`${N(d.key.t+d.start.semis)}, ${d.start.reg}`,lh:LH[d.lh],tempo:d.tempo,extra:d.extra};
 }

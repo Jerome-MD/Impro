@@ -1,7 +1,8 @@
 import {draw,view} from './engine.js';
+import {rhythmSvg} from './rhythm.js';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const sigSvg=s=>{const w=Math.max(40,16+14*s.names.length),y=p=>50-p*4,g=s.n>0?'♯':'♭';
-  return`<svg viewBox="0 0 ${w} 64" width="${w*1.3}" height="83" role="img" aria-label="Armure" fill="currentColor">${[0,2,4,6,8].map(p=>`<line x1="0" x2="${w}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".6"/>`).join('')}${s.pos.map((p,i)=>`<text x="${14+i*14}" y="${y(p)}" font-size="22" text-anchor="middle" dominant-baseline="central">${g}</text>`).join('')}</svg>`};
+  return`<svg viewBox="0 0 ${w} 64" width="${w}" height="64" role="img" aria-label="Armure" fill="currentColor">${[0,2,4,6,8].map(p=>`<line x1="0" x2="${w}" y1="${y(p)}" y2="${y(p)}" stroke="currentColor" stroke-opacity=".6"/>`).join('')}${s.pos.map((p,i)=>`<text x="${14+i*14}" y="${y(p)}" font-size="22" text-anchor="middle" dominant-baseline="central">${g}</text>`).join('')}</svg>`};
 // --- Stockage
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem('impro.'+k))??d}catch{return d}};
 const sv=(k,v)=>{try{localStorage.setItem('impro.'+k,JSON.stringify(v))}catch{}};
@@ -34,16 +35,19 @@ function timer(){
 // --- Affichage
 function render(){
   const d=T.draw,v=view(d,S.fr);clicks=v.clicks;
-  const lk=k=>`<button class="lk" data-k="${k}" aria-pressed="${!!T.locks[k]}" aria-label="Verrouiller">${T.locks[k]?'🔒':'🔓'}</button>`;
-  const cell=(k,lab,val,x='')=>`<section class="c"><div class="lab">${lab}${lk(k)}</div><div class="val">${val}</div>${x}</section>`;
-  const rh=d.extra.id==='rhythm'?`<div class="rh">${d.extra.grid.split(' ').map(c=>c==='/'?'<i></i>':`<b class="${c==='x'?'x':''}"></b>`).join('')}</div>`:'';
+  const lk=k=>`<button class="lk${T.locks[k]?' on':''}" data-k="${k}" aria-pressed="${!!T.locks[k]}">${T.locks[k]?'● fixé':'○ libre'}</button>`;
+  const cell=(k,lab,body,w)=>`<section class="c" style="grid-column:span ${w}"><div class="lab">${lab}</div>${lk(k)}${body}</section>`;
+  const V=s=>`<div class="val">${s}</div>`;
+  const rh=d.extra.id==='rhythm'?rhythmSvg(d.extra.grid,v.meter):'';
   $('main').innerHTML=
-    cell('style','Style',esc(v.style))+cell('key','Tonalité',esc(v.key),`<div class="sig">${sigSvg(v.sig)}<span class="sm">${esc(v.sig.text)}</span></div>`)+
-    `<section class="c"><div class="lab">Tempo${lk('tempo')}</div><div class="tp"><button data-t="-5" aria-label="Moins 5">−</button><span class="val">${v.tempo} BPM</span><button data-t="5" aria-label="Plus 5">+</button></div></section>`+
-    cell('meter','Mesure',esc(v.meter))+
-    `<section class="c w"><div class="lab">Grille, en boucle${lk('grid')}</div><div class="keys">${v.chords.map(c=>`<span class="k">${esc(c)}</span>`).join('')}</div></section>`+
-    cell('scale','Gamme',esc(v.scale),`<div class="lab">${esc(v.notes)}</div>`)+cell('start','Note de départ',esc(v.start))+
-    cell('lh','Main gauche',`<span class="sm">${esc(v.lh)}</span>`)+cell('extra','Consigne',`<span class="sm">${esc(v.extra.text)}</span>`,rh);
+    cell('style','Style',V(esc(v.style)),2)+
+    cell('key','Tonalité',`<div class="val ln">${esc(v.key)}${sigSvg(v.sig)}<span class="sm">${esc(v.sig.text)}</span></div>`,4)+
+    cell('tempo','Tempo',`<div class="tp"><button data-t="-5" aria-label="Moins 5">−</button><span class="val">${v.tempo} BPM</span><button data-t="5" aria-label="Plus 5">+</button></div>`,2)+
+    cell('meter','Mesure',V(esc(v.meter)),2)+cell('start','Note de départ',V(esc(v.start)),2)+
+    `<section class="c w"><div class="lab">Grille, en boucle</div>${lk('grid')}<div class="keys" style="--n:${v.chords.length>8?6:4}">${v.chords.map(c=>`<span class="k">${esc(c)}</span>`).join('')}</div></section>`+
+    cell('scale','Gamme',V(esc(v.scale))+`<div class="lab">${esc(v.notes)}</div>`+(v.hint?`<div class="lab">${esc(v.hint)}</div>`:''),3)+
+    cell('lh','Main gauche',V(`<span class="sm">${esc(v.lh)}</span>`),3)+
+    cell('extra','Consigne',`<div class="val ln"><span class="sm">${esc(v.extra.text)}</span>${rh}</div>`,6);
   $('#date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   $('#cnt').textContent=`${cnt(7)} séances sur 7 jours, ${cnt(30)} sur 30 jours`;
   $('#bDone').textContent=H[T.date]?.done?'Fait ✓':'Marquer fait';$('#bDone').classList.toggle('pri',!!H[T.date]?.done);
